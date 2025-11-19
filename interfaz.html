@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - E-Nose CacaoSent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --text: #1b1b1b;
+      --gray: #666;
+      --accent: #00989e;
+    }
+
+    h2 {
+      color: var(--accent);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Onest', sans-serif;
+    }
+
+    body {
+      display: flex;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* Sidebar */
+    aside {
+      width: 240px;
+      background: var(--panel);
+      box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    nav a {
+      display: block;
+      text-decoration: none;
+      color: var(--gray);
+      padding: 0.7rem 1rem;
+      border-radius: 6px;
+      transition: all 0.3s;
+      margin: 0.2rem 0;
+      font-size: 0.95rem;
+    }
+
+    nav a:hover,
+    nav a.active {
+      background: linear-gradient(90deg, var(--accent), #00c6cf);
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0,152,158,0.3);
+    }
+
+    /* Main */
+    main {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .search {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      width: 250px;
+      outline: none;
+      font-size: 0.95rem;
+      transition: border 0.3s;
+    }
+
+    .search:focus {
+      border-color: var(--accent);
+    }
+
+    /* Welcome Section */
+    .welcome-box {
+      background: white;
+      width: 90%;
+      max-width: 700px;
+      padding: 3rem 2rem;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+      animation: fadeIn 1s ease;
+    }
+
+    .welcome-box img {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 4px 15px rgba(0, 158, 111, 0.4);
+    }
+
+    .welcome-box h1 {
+      font-size: 1.8rem;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .welcome-box p {
+      color: #555;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.9rem 2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      background: #00c6cf;
+      box-shadow: 0 4px 10px rgba(0,152,158,0.4);
+      transform: translateY(-2px);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #888;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+
+<body>
+  <aside>
+    <div>
+      <div style="display: flex;align-items: center;justify-content: center;">
+        <img style="width:80px;height:80px;" src="./cacao.png"/>
+        <div class="logo" style="margin-left:5px;">CacaoSense</div>
+      </div>
+      <nav>
+        <a href="/interfaz.html" class="active">Inicio</a>
+        <a href="/dispositivos.html">Dispositivos</a>
+        <a href="/lecturas.html">Lecturas</a>
+        <a href="/predicciones.html">Predicciones</a>
+      </nav>
+    </div>
+    <footer>© 2025 E-Nose</footer>
+  </aside>
+
+  <main>
+    <div class="welcome-box">
+      <img src="./cacao.png" alt="Logo CacaoSent">
+      <h1>Bienvenido a E-Nose CacaoSense</h1>
+      <p>
+        Sistema inteligente de análisis aromático para la calidad del cacao.<br>
+        Monitorea, predice y optimiza tus lecturas de sensores MQ en tiempo real.
+      </p>
+      <a href="/lecturas.html" class="btn">Ir a Lecturas</a>
+    </div>
+  </main>
+</body>
+</html>

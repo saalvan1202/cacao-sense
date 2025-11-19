@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dispositivos - E-Nose</title>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --text: #1b1b1b;
+      --gray: #666;
+      --accent: #00989e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Onest', sans-serif; }
+    html, body { height: 100%; overflow: hidden; }
+    body { display: flex; background: var(--bg); color: var(--text); }
+
+    aside {
+      width: 240px;
+      background: var(--panel);
+      box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .logo { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+
+    nav a {
+      display: block;
+      text-decoration: none;
+      color: var(--gray);
+      padding: 0.7rem 1rem;
+      border-radius: 6px;
+      transition: all 0.3s;
+      margin: 0.2rem 0;
+      font-size: 0.95rem;
+    }
+
+    nav a:hover, nav a.active {
+      background: linear-gradient(90deg, var(--accent), #00c6cf);
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0,152,158,0.3);
+    }
+
+    main {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    h2 { color: var(--accent); }
+
+    .device-panel {
+      background: var(--panel);
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      padding: 1.5rem;
+      max-width: 600px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    .status span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+    }
+
+    .connected { color: #00b894; }
+    .disconnected { color: #d63031; }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.8rem 1.2rem;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: 0.3s;
+      margin-right: 0.5rem;
+    }
+
+    button:hover {
+      background: #00afb5;
+      box-shadow: 0 3px 8px rgba(0,152,158,0.3);
+    }
+
+    .log {
+      background: #f1fafa;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: monospace;
+      height: 200px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #888;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+    }
+  </style>
+</head>
+
+<body>
+  <aside>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:center;">
+        <img style="width:80px;height:80px;" src="./cacao.png"/>
+        <div class="logo" style="margin-left:5px;">CacaoSense</div>
+      </div>
+      <nav>
+        <a href="/interfaz.html">Inicio</a>
+        <a href="/dispositivos.html" class="active">Dispositivos</a>
+        <a href="/lecturas.html">Lecturas</a>
+        <a href="/predicciones.html">Predicciones</a>
+      </nav>
+    </div>
+    <footer>© 2025 E-Nose</footer>
+  </aside>
+
+  <main>
+    <h2>Gestión de Dispositivos</h2>
+
+    <div class="device-panel">
+      <div class="status">
+        <span>Estado: <span id="estado" class="disconnected">Desconectado</span></span>
+        <div class="controls">
+          <button id="btnConectar">Conectar</button>
+          <button id="btnIniciar" style="display:none;">▶ Iniciar lectura</button>
+          <button id="btnDetener" style="display:none;background:#d63031;">Detener</button>
+        </div>
+      </div>
+
+      <div class="log" id="log">Esperando conexión...</div>
+    </div>
+  </main>
+
+  <script>
+    const btnConectar = document.getElementById("btnConectar");
+    const btnIniciar = document.getElementById("btnIniciar");
+    const btnDetener = document.getElementById("btnDetener");
+    const estado = document.getElementById("estado");
+    const log = document.getElementById("log");
+
+    let puerto, lector, escritor;
+    let leyendo = false;
+
+    function logMensaje(msg) {
+      const p = document.createElement("p");
+      p.textContent = msg;
+      log.appendChild(p);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // Conectar al Arduino
+    btnConectar.addEventListener("click", async () => {
+      try {
+        if (!("serial" in navigator)) {
+          alert("Tu navegador no soporta Web Serial API. Usa Chrome o Edge.");
+          return;
+        }
+
+        puerto = await navigator.serial.requestPort();
+        await puerto.open({ baudRate: 9600 });
+
+        estado.textContent = "Conectado ✅";
+        estado.classList.replace("disconnected", "connected");
+        logMensaje("✅ Arduino conectado correctamente.");
+        btnIniciar.style.display = "inline-block";
+        btnConectar.disabled = true;
+
+        lector = puerto.readable.getReader();
+        escritor = puerto.writable.getWriter();
+      } catch (error) {
+        logMensaje("❌ Error de conexión: " + error.message);
+      }
+    });
+
+    // Iniciar lectura (envía "1" al Arduino)
+    btnIniciar.addEventListener("click", async () => {
+      if (!puerto) return;
+      await escritor.write(new TextEncoder().encode("1"));
+      logMensaje("📤 Enviado: 1 (Inicio de lectura)");
+      leyendo = true;
+      btnIniciar.style.display = "none";
+      btnDetener.style.display = "inline-block";
+
+      // Empieza a leer datos
+      leerDatos();
+    });
+
+    // Detener lectura
+    btnDetener.addEventListener("click", async () => {
+      leyendo = false;
+      await escritor.write(new TextEncoder().encode("0"));
+      logMensaje("🛑 Enviado: 0 (Lectura detenida)");
+      btnDetener.style.display = "none";
+      btnIniciar.style.display = "inline-block";
+    });
+
+async function leerDatos() {
+  logMensaje("Esperando datos...");
+  let buffer = ""; // acumulador de texto
+
+  while (leyendo) {
+    const { value, done } = await lector.read();
+    if (done) break;
+    if (value) {
+      const texto = new TextDecoder().decode(value);
+      buffer += texto;
+
+      // Si hay salto de línea, procesamos la línea completa
+      let lineas = buffer.split("\n");
+      buffer = lineas.pop(); // guardamos lo que no se completó
+
+      for (let linea of lineas) {
+        linea = linea.trim();
+        if (linea) logMensaje("📡 " + linea);
+
+        // Detecta una medición completa
+        if (linea.includes("MQ1") && linea.includes("MQ2") && linea.includes("MQ3")) {
+          guardarPrediccion(linea);
+        }
+      }
+    }
+  }
+}
+
+// Guarda las mediciones en localStorage
+function guardarPrediccion(linea) {
+  try {
+    const datos = linea.match(/MQ1\s*:\s*([\d.]+).*MQ2\s*:\s*([\d.]+).*MQ3\s*:\s*([\d.]+)/);
+    if (!datos) return;
+
+    const lectura = {
+      fecha: new Date().toLocaleString(),
+      MQ1: parseFloat(datos[1]),
+      MQ2: parseFloat(datos[2]),
+      MQ3: parseFloat(datos[3])
+    };
+
+    // Obtener historial previo
+    let historial = JSON.parse(localStorage.getItem("lecturasArduino")) || [];
+    historial.push(lectura);
+    localStorage.setItem("lecturasArduino", JSON.stringify(historial));
+
+    logMensaje("💾 Lectura guardada en localStorage: " + JSON.stringify(lectura));
+  } catch (e) {
+    logMensaje("⚠️ Error al guardar datos: " + e.message);
+  }
+}
+
+  </script>
+</body>
+</html>

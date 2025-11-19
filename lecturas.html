@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lectura en Tiempo Real - E-Nose</title>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --text: #1b1b1b;
+      --gray: #666;
+      --accent: #00989e;
+    }
+          h2{
+        color: var(--accent);
+      }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Onest', sans-serif; }
+    body { display: flex; min-height: 100vh; background: var(--bg); color: var(--text); }
+    aside { width: 240px; background: var(--panel); box-shadow: 2px 0 10px rgba(0,0,0,0.05); padding: 1.5rem 1rem; display: flex; flex-direction: column; justify-content: space-between; }
+    .logo { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+    nav a { display: block; text-decoration: none; color: var(--gray); padding: 0.7rem 1rem; border-radius: 6px; transition: all 0.3s; margin: 0.2rem 0; font-size: 0.95rem; }
+    nav a:hover, nav a.active { background: linear-gradient(90deg, var(--accent), #00c6cf); color: white; font-weight: 600; box-shadow: 0 4px 10px rgba(0,152,158,0.3); }
+    main { flex: 1; padding: 2rem; display: flex; flex-direction: column; gap: 2rem; }
+    header { display: flex; justify-content: space-between; align-items: center; }
+    .section { background: var(--panel); border: 1px solid #e3e6ea; border-radius: 6px; padding: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.04); }
+    .section h2 { color: var(--gray); margin-bottom: 1rem; }
+    .reading-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+    .reading { background: #eef2f3; border-radius: 6px; padding: 1rem; text-align: center; }
+    .reading h3 { font-size: 0.85rem; color: var(--gray); margin-bottom: 0.5rem; }
+    .reading div { display: flex; flex-direction: column; align-items: center; gap: 4px; max-height:130px; overflow-y:auto; }
+    
+    .concentracion {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease-out;
+    }
+    .concentracion.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .normalizado {
+      font-size: 0.8rem;
+      color: #444;
+    }
+
+    .btn { margin-bottom: 1.5rem;margin-top: 1.5rem; margin-right:5px; background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 0.7rem 1.2rem; cursor: pointer; transition: 0.3s; }
+    .btn:hover { background: #00b5bc; }
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #888;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+    }
+    /* ---- CARTA DE PREDICCIÓN ---- */
+    .pred-card {
+      margin-top: 1.5rem;
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.8rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.07);
+      transition: all 0.3s ease-in-out;
+    }
+    .pred-card h3 { color: var(--accent); margin-bottom: 1rem; font-size: 1.2rem; }
+
+    .loading-animation { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 1rem 0; }
+    .loading-animation div { width: 10px; height: 10px; border-radius: 50%; background-color: var(--accent); animation: bounce 1s infinite ease-in-out alternate; }
+    .loading-animation div:nth-child(2) { animation-delay: 0.2s; }
+    .loading-animation div:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { to { transform: translateY(-8px); opacity: 0.6; } }
+
+    .resultado { opacity: 0; transform: translateY(10px); transition: all 0.5s ease-in-out; }
+    .resultado.visible { opacity: 1; transform: translateY(0); }
+
+    .options { margin-top: 1rem; display: flex; justify-content: center; gap: 30px; width: 100%; max-width: 300px; margin-left: auto; margin-right: auto; }
+    .btn-option { padding: 0.6rem 1.2rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: white; transition: 0.3s; }
+    .btn-si { background: #28a745; }
+    .btn-no { background: #dc3545; }
+    .btn-si:hover { background: #32c757; }
+    .btn-no:hover { background: #ff4d4f; }
+
+    /* Spinner sobre lectura */
+    .spinner { display:none; margin: 10px auto; border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg); } }
+
+    /* Toast flotante */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--accent);
+      color: white;
+      padding: 0.8rem 1.2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.3s ease;
+      z-index: 9999;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+
+<body>
+  <aside>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:center;">
+        <img style="width:80px;height:80px;" src="./cacao.png"/>
+        <div class="logo" style="margin-left:5px;">CacaoSense</div>
+      </div>
+      <nav>
+        <a href="/interfaz.html">Inicio</a>
+        <a href="/dispositivos.html">Dispositivos</a>
+        <a href="/lecturas.html" class="active">Lecturas</a>
+        <a href="/predicciones.html">Predicciones</a>
+      </nav>
+    </div>
+    <footer>© 2025 E-Nose</footer>
+  </aside>
+
+  <main>
+    <header><h2>Lectura en Tiempo Real</h2></header>
+
+    <section id="lectura" class="section">
+      <h2>Valores de sensores</h2>
+
+      <button class="btn" id="btnConectar">Conectar al Arduino</button>
+      <button class="btn" id="btnIniciarLectura" style="display:none;">▶ Iniciar Lectura</button>
+      <div class="spinner" id="spinner"></div>
+
+      <div class="reading-box">
+        <div class="reading">
+          <h3>Sensor MQ2 - Etanol (C₂H₅OH)</h3>
+          <div id="mq1Container">
+            <div class="concentracion" id="mq1Valor">0</div>
+            <div class="normalizado" id="mq1Norm">0</div>
+          </div>
+        </div>
+        <div class="reading">
+          <h3>Sensor MQ6 - Dioxido de Carbono (CO₂)</h3>
+          <div id="mq2Container">
+            <div class="concentracion" id="mq2Valor">0</div>
+            <div class="normalizado" id="mq2Norm">0</div>
+          </div>
+        </div>
+        <div class="reading">
+          <h3>Sensor MQ7 - Monoxido de Carbono (CO)</h3>
+          <div id="mq3Container">
+            <div class="concentracion" id="mq3Valor">0</div>
+            <div class="normalizado" id="mq3Norm">0</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn" onclick="iniciarPrediccion()">Iniciar Predicción</button>
+
+      <div id="prediccionCard" class="pred-card" style="display:none;">
+        <h3 id="tituloPred">Procesando datos...</h3>
+        <div id="loading" class="loading-animation"><div></div><div></div><div></div></div>
+        <div id="resultadoBox" class="resultado">
+          <p id="resultadoTexto">Resultado: <strong>Aroma de alta calidad</strong></p>
+          <p id="confianza">Confianza: 98%</p>
+          <p id="pregunta" style="font-weight:600; color:#1b1b1b; margin-top:1rem;">¿La predicción es correcta?</p>
+          <div class="options">
+            <button class="btn-option btn-si" onclick="confirmar(true)">Sí</button>
+            <button class="btn-option btn-no" onclick="confirmar(false)">No</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+  let puerto, lector, leyendo = false, writer;
+  let lectura = {};
+
+  const spinner = document.getElementById("spinner");
+
+  function showToast(msg) {
+    const toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => { toast.classList.remove("show"); }, 3000);
+  }
+
+  const btnConectar = document.getElementById("btnConectar");
+  const btnIniciarLectura = document.getElementById("btnIniciarLectura");
+
+  btnConectar.addEventListener("click", async () => {
+    try {
+      if (!("serial" in navigator)) return showToast("Navegador no soporta Web Serial API.");
+      puerto = await navigator.serial.requestPort();
+      await puerto.open({ baudRate: 9600 });
+
+      const encoder = new TextEncoderStream();
+      encoder.readable.pipeTo(puerto.writable);
+      writer = encoder.writable.getWriter();
+
+      showToast("Puerto serial conectado");
+      btnIniciarLectura.style.display = "inline-block";
+    } catch (err) {
+      showToast("Error al conectar: " + err.message);
+    }
+  });
+
+  btnIniciarLectura.addEventListener("click", async () => {
+    if (!puerto || !writer) return showToast("Primero conecta al Arduino");
+    leyendo = true;
+    spinner.style.display = "block";
+
+    await writer.write("1\n");
+
+    const decodificador = new TextDecoderStream();
+    const entrada = puerto.readable.pipeThrough(decodificador);
+    lector = entrada.getReader();
+
+    let buffer = "";
+    while (leyendo) {
+      const { value, done } = await lector.read();
+      if (done) break;
+      if (value) {
+        buffer += value;
+        const lineas = buffer.split("\n");
+        buffer = lineas.pop();
+        for (let linea of lineas) procesarLinea(linea.trim());
+      }
+    }
+  });
+
+function procesarLinea(linea) {
+  console.log("📡 Línea recibida:", linea);
+
+  // Si la línea contiene valores normalizados
+  if (linea.toLowerCase().includes("normalizados")) {
+    const regex = /mq1[:=]?\s*([\d.]+).*mq2[:=]?\s*([\d.]+).*mq3[:=]?\s*([\d.]+)/i;
+    const match = linea.match(regex);
+
+    if (match) {
+      const [n1, n2, n3] = [parseFloat(match[1]), parseFloat(match[2]), parseFloat(match[3])];
+
+      const sensores = [
+        { valor: n1, contenedor: "mq1" },
+        { valor: n2, contenedor: "mq2" },
+        { valor: n3, contenedor: "mq3" }
+      ];
+
+      sensores.forEach(s => {
+        const valorElem = document.getElementById(s.contenedor + "Norm");
+        valorElem.textContent = s.valor.toFixed(2);
+        valorElem.classList.remove("visible");
+        setTimeout(() => valorElem.classList.add("visible"), 50);
+      });
+    }
+    return; // ✅ No seguimos procesando la línea
+  }
+
+  // Si la línea NO está normalizada (valores originales)
+  const regex = /mq1[:=]?\s*([\d.]+).*mq2[:=]?\s*([\d.]+).*mq3[:=]?\s*([\d.]+)/i;
+  const match = linea.match(regex);
+
+  if (match) {
+    spinner.style.display = "none";
+    const [c1, c2, c3] = [parseFloat(match[1]), parseFloat(match[2]), parseFloat(match[3])];
+
+    const sensores = [
+      { valor: c1, contenedor: "mq1" },
+      { valor: c2, contenedor: "mq2" },
+      { valor: c3, contenedor: "mq3" }
+    ];
+
+    sensores.forEach(s => {
+      const valorElem = document.getElementById(s.contenedor + "Valor");
+      valorElem.textContent = s.valor.toFixed(2);
+      valorElem.classList.remove("visible");
+      setTimeout(() => valorElem.classList.add("visible"), 50);
+    });
+  }
+}
+
+
+  async function iniciarPrediccion() {
+    const card = document.getElementById("prediccionCard");
+    const loading = document.getElementById("loading");
+    const resultadoBox = document.getElementById("resultadoBox");
+    const titulo = document.getElementById("tituloPred");
+
+    card.style.display = "block";
+    resultadoBox.classList.remove("visible");
+    loading.style.display = "flex";
+    titulo.textContent = "Procesando datos...";
+
+    // 📤 Construir objeto con los datos actuales
+    const data = {
+      MQ1: parseFloat(document.getElementById("mq1Valor").textContent),
+      MQ2: parseFloat(document.getElementById("mq2Valor").textContent),
+      MQ3: parseFloat(document.getElementById("mq3Valor").textContent),
+      NORM1: parseFloat(document.getElementById("mq1Norm").textContent),
+      NORM2: parseFloat(document.getElementById("mq2Norm").textContent),
+      NORM3: parseFloat(document.getElementById("mq3Norm").textContent)
+    };
+
+    try {
+      // 🔗 Enviar los datos al backend
+      const response = await fetch("http://127.0.0.1:8000/consulta/predecir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) throw new Error("Error en la respuesta del servidor");
+
+      const result = await response.json();
+
+      // 🎯 Mostrar resultado del modelo
+      loading.style.display = "none";
+      titulo.textContent = "Resultado del Modelo";
+      resultadoBox.classList.add("visible");
+
+      document.getElementById("resultadoTexto").innerHTML =
+        "Resultado: <strong>" + result.resultado + "</strong>";
+      document.getElementById("confianza").textContent =
+        "Confianza: " + (result.confianza * 100).toFixed(1) + "%";
+
+      // 📦 Guardar lectura localmente
+      lectura = {
+        mq1: [document.getElementById("mq1Valor").textContent, document.getElementById("mq1Norm").textContent],
+        mq2: [document.getElementById("mq2Valor").textContent, document.getElementById("mq2Norm").textContent],
+        mq3: [document.getElementById("mq3Valor").textContent, document.getElementById("mq3Norm").textContent],
+        resultado: result.resultado,
+        confianza: result.confianza,
+        fecha: new Date().toLocaleString(),
+        correcto: null
+      };
+    } catch (error) {
+      loading.style.display = "none";
+      titulo.textContent = "Error en la predicción";
+      showToast("⚠️ No se pudo conectar con el servidor: " + error.message);
+    }
+  }
+
+  function confirmar(correcto) {
+    lectura.correcto = correcto;
+    let historial = JSON.parse(localStorage.getItem("lecturas")) || [];
+    historial.push(lectura);
+    localStorage.setItem("lecturas", JSON.stringify(historial));
+    window.location.href = "predicciones.html";
+  }
+</script>
+
+</body>
+</html>
