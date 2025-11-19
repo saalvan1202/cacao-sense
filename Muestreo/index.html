@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Nariz Electrónica — Interfaz</title>
+  <style>
+    /* Paleta principal */
+    :root{
+      --accent: #1a98a0;    /* color pedido */
+      --accent-2: #17b5ae;
+      --bg: #f6fbfb;
+      --card: #ffffff;
+      --muted: #6b7c7d;
+      --glass: rgba(26,152,160,0.06);
+      --danger: #ff6b6b;
+      --success: #4caf50;
+      --shadow: 0 8px 24px rgba(22,31,31,0.06);
+    }
+
+    /* Reset y tipografía */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(180deg, #eef8f8 0%, var(--bg) 100%);
+      color:#083037;
+      padding:28px;
+    }
+
+    /* Layout */
+    .container{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
+    header{grid-column:1/-1;display:flex;align-items:center;gap:18px;margin-bottom:6px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:14px}
+
+    /* Card */
+    .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:var(--shadow);border:1px solid rgba(8,48,55,0.04)}
+    .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;
+      gap:8px;padding:12px 16px;border-radius:10px;border:none;cursor:pointer;
+      font-weight:600;color:white;background:var(--accent);box-shadow:0 6px 18px rgba(26,152,160,0.15);
+    }
+    .btn.secondary{background:transparent;color:var(--accent);border:1px solid rgba(26,152,160,0.12);font-weight:700}
+    .btn.danger{background:var(--danger);box-shadow:0 6px 18px rgba(255,107,107,0.12)}
+
+    /* Main area */
+    .main-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+    .sensor{
+      background:linear-gradient(180deg, var(--glass), transparent);
+      border-radius:10px;padding:14px;border:1px solid rgba(8,48,55,0.03);text-align:center;
+    }
+    .sensor .label{font-size:13px;color:var(--muted)}
+    .sensor .value{font-size:26px;font-weight:800;margin-top:6px;color:#073033}
+    .sensor .units{font-size:12px;color:var(--muted);margin-top:6px}
+
+    /* Prediction panel */
+    .prediction{
+      display:flex;flex-direction:column;gap:12px;
+    }
+    .pred-card{
+      border-radius:10px;padding:14px;border:1px dashed rgba(8,48,55,0.04);
+      display:flex;justify-content:space-between;align-items:center;background:#fcfffe;
+    }
+    .pred-label{font-weight:800;font-size:18px;color:var(--accent)}
+    .pred-confidence{font-size:13px;color:var(--muted)}
+
+    .result-details{display:flex;flex-direction:column;gap:6px}
+    .small{font-size:13px;color:var(--muted)}
+
+    /* Feedback question */
+    .feedback{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+    .yn{display:flex;gap:10px}
+    .yn button{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(8,48,55,0.06);cursor:pointer;background:white}
+    .yn button.yes{background:linear-gradient(90deg,var(--accent-2),var(--accent));color:white;font-weight:700}
+    .yn button.no{background:transparent;color:var(--danger);font-weight:700;border:1px solid rgba(255,107,107,0.10)}
+    textarea{width:100%;min-height:88px;border-radius:8px;padding:10px;border:1px solid rgba(8,48,55,0.06);resize:vertical}
+
+    /* Right column */
+    aside.right{display:flex;flex-direction:column;gap:14px}
+    .meta{display:flex;flex-direction:column;gap:8px}
+    .meta .row{display:flex;gap:8px}
+    input[type="number"], select{padding:8px;border-radius:8px;border:1px solid rgba(8,48,55,0.06);flex:1}
+
+    /* Responsive */
+    @media (max-width:960px){
+      .container{grid-template-columns:1fr;padding:18px}
+      .main-grid{grid-template-columns:1fr;gap:12px}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Nariz electrónica — Monitoreo de semilla de cacao</h1>
+        <p class="lead">Interfaz de diseño. Pulsa "Iniciar proceso" para ejecutar la medición y obtener la predicción.</p>
+      </div>
+      <div style="margin-left:auto" class="small">Paleta principal: <strong style="color:var(--accent)">&nbsp;#1a98a0</strong></div>
+    </header>
+
+    <!-- Main content -->
+    <section class="card">
+      <div class="controls" style="justify-content:space-between">
+        <div style="display:flex;gap:12px;align-items:center">
+          <button id="startBtn" class="btn">▶ Iniciar proceso</button>
+          <button id="stopBtn" class="btn secondary">■ Detener</button>
+        </div>
+        <div style="text-align:right">
+          <div class="small">Estado del sistema</div>
+          <div style="font-weight:700;color:var(--muted)" id="statusText">Inactivo</div>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <!-- Sensor cards -->
+        <div class="sensor">
+          <div class="label">Sensor MQ1</div>
+          <div class="value" id="s1_value">—</div>
+          <div class="units">Concentración (u.a.)</div>
+        </div>
+
+        <div class="sensor">
+          <div class="label">Sensor MQ2</div>
+          <div class="value" id="s2_value">—</div>
+          <div class="units">Concentración (u.a.)</div>
+        </div>
+
+        <div class="sensor">
+          <div class="label">Sensor MQ3</div>
+          <div class="value" id="s3_value">—</div>
+          <div class="units">Concentración (u.a.)</div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; display:flex;gap:14px;align-items:flex-start">
+        <!-- Prediction panel -->
+        <div class="card prediction" style="flex:1">
+          <div>
+            <div class="small">Resultado del modelo</div>
+            <div class="pred-card" aria-live="polite">
+              <div class="result-details">
+                <div class="pred-label" id="predLabel">—</div>
+                <div class="pred-confidence" id="predConf">Confianza: —</div>
+              </div>
+              <div style="text-align:right">
+                <div class="small">Fecha</div>
+                <div style="font-weight:600" id="predTime">—</div>
+              </div>
+            </div>
+
+            <div style="margin-top:10px" class="small">Concentraciones identificadas por sensores</div>
+            <div style="display:flex;gap:10px;margin-top:8px">
+              <div style="flex:1;padding:8px;border-radius:8px;background:var(--glass);text-align:center">
+                <div class="small">MQ1</div>
+                <div style="font-weight:700" id="detail_s1">—</div>
+              </div>
+              <div style="flex:1;padding:8px;border-radius:8px;background:var(--glass);text-align:center">
+                <div class="small">MQ2</div>
+                <div style="font-weight:700" id="detail_s2">—</div>
+              </div>
+              <div style="flex:1;padding:8px;border-radius:8px;background:var(--glass);text-align:center">
+                <div class="small">MQ3</div>
+                <div style="font-weight:700" id="detail_s3">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="width:240px">
+            <div class="small">Acciones</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+              <button class="btn secondary">Exportar CSV</button>
+              <button class="btn secondary">Ver histórico</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column: metadata / configuración -->
+        <aside class="right">
+          <div class="card meta">
+            <div class="small">Configuración de muestreo</div>
+            <div class="row">
+              <label class="small" style="min-width:84px;align-self:center">Masa (g)</label>
+              <input id="massInput" type="number" value="2" step="0.1" />
+            </div>
+            <div class="row">
+              <label class="small" style="min-width:84px;align-self:center">Temp (°C)</label>
+              <input id="tempInput" type="number" value="45" step="1" />
+            </div>
+            <div class="row">
+              <label class="small" style="min-width:84px;align-self:center">Tiempo (min)</label>
+              <input id="timeInput" type="number" value="20" step="1" />
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="small">Notas rápidas</div>
+            <ul style="padding-left:18px;margin:8px 0 0 0;color:var(--muted);font-size:13px">
+              <li>Calentar MQ 20–30 min antes de medir.</li>
+              <li>Mantener distancia sensor–vial constante.</li>
+              <li>Hacer 5 réplicas por condición.</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Feedback -->
+      <div class="card" style="margin-top:14px">
+        <div class="small" style="font-weight:700">¿ES correcta la predicción?</div>
+        <div class="feedback">
+          <div class="yn" role="group" aria-label="¿Es correcta la predicción?">
+            <button class="yes" id="btnYes">Sí, es correcta</button>
+            <button class="no" id="btnNo">No, corregir</button>
+          </div>
+          <div class="small">Comentarios (opcional)</div>
+          <textarea id="feedbackText" placeholder="Escribe por qué la predicción es correcta o qué debería cambiar..."></textarea>
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn secondary">Enviar feedback</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- NOTE: Este documento es solo diseño. Agrega la funcionalidad JS/Python que necesites. -->
+</body>
+</html>

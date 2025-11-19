@@ -1,0 +1,5 @@
+pyserial
+matplotlib
+tk
+pandas
+openpyxl
